@@ -49,7 +49,6 @@ def get_stock_data(ticker, start_date, end_date):
     st.error("All data fetch attempts failed. Using fallback AAPL data.")
     return yf.download("AAPL", period="1mo")  # Guaranteed fallback
 
-@st.cache_resource
 import urllib.request
 import tempfile
 
