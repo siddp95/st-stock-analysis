@@ -46,8 +46,8 @@ def get_stock_data(ticker, start_date, end_date):
         except Exception as e:
             st.warning(f"Strategy {i+1} failed: {str(e)}")
     
-    st.error("All data fetch attempts failed. Using fallback AAPL data.")
-    return yf.download("AAPL", period="1mo")  # Guaranteed fallback
+    st.error("All data fetch attempts failed. Using fallback SPY data.")
+    return yf.download("SPY", period="1mo")  # Guaranteed fallback
 
 import urllib.request
 import tempfile
@@ -73,7 +73,7 @@ with st.sidebar:
     st.title("Stock Analysis")
     
     # Ticker input
-    ticker = st.text_input("Enter stock ticker:", "AAPL").upper()
+    ticker = st.text_input("Enter stock ticker:", "SPY").upper()
     
     # Date range
     start_date = st.date_input("Start date", datetime.now() - timedelta(days=365))
@@ -114,10 +114,10 @@ def main():
     data[numeric_cols] = data[numeric_cols].apply(pd.to_numeric, errors='coerce')
     
     # Check if we're using fallback data
-    using_fallback = ticker != "AAPL" and data.index[0].date() < start_date
+    using_fallback = ticker != "SPY" and data.index[0].date() < start_date
     
     if using_fallback:
-        st.warning(f"Showing AAPL sample data for demonstration")
+        st.warning(f"Showing SPY sample data for demonstration")
         show_predictions = False
     else:
         show_predictions = True
