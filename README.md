@@ -1,5 +1,6 @@
 # Stock Analysis
 Stock ticker analysis built on Streamlit
+https://st-stock-analysis.streamlit.app/
 
 Future Improvements:
 - Display the accuracy of the model against the given stock under the price predictions chart
