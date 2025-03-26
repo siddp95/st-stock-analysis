@@ -15,11 +15,24 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Cache all data fetches for 15 minutes
-@st.cache_data(ttl=60*15)
+# Cache data fetches
+@st.cache_data(ttl=60*60)  # Cache for 1 hour
 def get_stock_data(ticker, start_date, end_date):
-    """Fetch stock data with caching"""
-    return yf.download(ticker, start=start_date, end=end_date, progress=False)
+    try:
+        data = yf.download(
+            ticker, 
+            start=start_date, 
+            end=end_date,
+            progress=False,
+            timeout=10  # Add timeout
+        )
+        if data.empty:
+            st.error(f"No data found for {ticker}")
+            return None
+        return data
+    except Exception as e:
+        st.error(f"Failed to fetch data: {str(e)}")
+        return None
 
 @st.cache_resource
 def load_model_from_github():
