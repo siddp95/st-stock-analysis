@@ -50,10 +50,24 @@ def get_stock_data(ticker, start_date, end_date):
     return yf.download("AAPL", period="1mo")  # Guaranteed fallback
 
 @st.cache_resource
+import urllib.request
+import tempfile
+
+@st.cache_resource
 def load_model_from_github():
-    """Load Keras model from GitHub"""
+    """Download and load Keras model from GitHub"""
     model_url = "https://raw.githubusercontent.com/siddp95/st-stock-analysis/main/stock_price_prediction.keras"
-    return load_model(model_url)
+    
+    try:
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(suffix='.keras', delete=False) as tmp_file:
+            # Download model
+            urllib.request.urlretrieve(model_url, tmp_file.name)
+            # Load model
+            return load_model(tmp_file.name)
+    except Exception as e:
+        st.error(f"Model loading failed: {str(e)}")
+        return None
 
 # Sidebar controls
 with st.sidebar:
