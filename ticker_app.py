@@ -15,24 +15,39 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Cache data fetches
-@st.cache_data(ttl=60*60)  # Cache for 1 hour
+# Replace your current get_stock_data function with this enhanced version:
+@st.cache_data(ttl=60*60)
 def get_stock_data(ticker, start_date, end_date):
-    try:
-        data = yf.download(
-            ticker, 
-            start=start_date, 
-            end=end_date,
-            progress=False,
-            timeout=10  # Add timeout
-        )
-        if data.empty:
-            st.error(f"No data found for {ticker}")
-            return None
-        return data
-    except Exception as e:
-        st.error(f"Failed to fetch data: {str(e)}")
-        return None
+    """Robust data fetcher with multiple fallbacks and timezone handling"""
+    # Convert dates to strings for yfinance
+    start_str = start_date.strftime('%Y-%m-%d')
+    end_str = end_date.strftime('%Y-%m-%d')
+    
+    strategies = [
+        # Strategy 1: Try with auto-adjust=True
+        lambda: yf.download(ticker, start=start_str, end=end_str, 
+                          progress=False, timeout=10, auto_adjust=True),
+        # Strategy 2: Try without auto-adjust
+        lambda: yf.download(ticker, start=start_str, end=end_str,
+                          progress=False, timeout=10),
+        # Strategy 3: Try Ticker object method
+        lambda: yf.Ticker(ticker).history(start=start_str, end=end_str,
+                                       interval='1d', timeout=10)
+    ]
+    
+    for i, strategy in enumerate(strategies):
+        try:
+            data = strategy()
+            if not data.empty:
+                # Ensure timezone is set
+                if data.index.tz is None:
+                    data.index = data.index.tz_localize('UTC')
+                return data
+        except Exception as e:
+            st.warning(f"Strategy {i+1} failed: {str(e)}")
+    
+    st.error("All data fetch attempts failed. Using fallback AAPL data.")
+    return yf.download("AAPL", period="1mo")  # Guaranteed fallback
 
 @st.cache_resource
 def load_model_from_github():
@@ -74,28 +89,28 @@ except Exception as e:
     model = None
 
 # Main app
+# Replace your current data loading block with:
 def main():
     st.title("Stock Analysis Dashboard")
     
-    # Download data with error handling
-    try:
-        data = yf.download(ticker, start=start_date, end=end_date, progress=False)
-        if data.empty:
-            st.error("No data available for this ticker/date range. Try a different ticker or date range.")
-            return
-        
-        # Convert to proper numeric format
-        data = data.apply(pd.to_numeric, errors='coerce')
-        close_prices = safe_convert_to_series(data['Close']).dropna()
-        
-        # Debug info
-        st.sidebar.write(f"Data from {data.index[0].date()} to {data.index[-1].date()}")
-        st.sidebar.write(f"Data points: {len(close_prices)}")
-        
-    except Exception as e:
-        st.error(f"Error loading data: {str(e)}")
-        return
+    # Get data using robust fetcher
+    data = get_stock_data(ticker, start_date, end_date)
     
+    # Convert to numeric and handle missing data
+    numeric_cols = ['Open', 'High', 'Low', 'Close', 'Volume']
+    data[numeric_cols] = data[numeric_cols].apply(pd.to_numeric, errors='coerce')
+    
+    # Check if we're using fallback data
+    using_fallback = ticker != "AAPL" and data.index[0].date() < start_date
+    
+    if using_fallback:
+        st.warning(f"Showing AAPL sample data for demonstration")
+        show_predictions = False
+    else:
+        show_predictions = True
+    
+    close_prices = safe_convert_to_series(data['Close']).dropna()
+        
     # Tab layout
     tab1, tab2, tab3 = st.tabs(["Market Overview", "Technical Analysis", "Fundamental Analysis"])
     
