@@ -1,2 +1,2 @@
-# st-stock-analysis
+# Stock Analysis
 Stock ticker analysis built on Streamlit
