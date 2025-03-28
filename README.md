@@ -20,16 +20,21 @@ The dashbobard leverages a modern Python data stack built on pandas for data tra
 The technical analysis module calculates moving averages (SMA/EMA) with configurable lookback windows, identifying key support/resistance levels and trend reversals. Fundamental metrics including P/E ratios, beta values, and dividend yields are computed daily from cleaned API data. The predictive modeling system uses an LSTM architecture trained on five years of daily prices, achieving a mean absolute error of $2.34 on holdout test data through walk-forward validation.
 
 ## Model Architecture
+
+The predictive engine powering this dashboard employs a stacked LSTM neural network designed for financial time series forecasting. The model processes sequential price data through three LSTM layers, each containing 50 units to capture market patterns while maintaining computational efficiency. 
+
+### Core Structure
 ```python
 model = Sequential([
-    LSTM(units=50, return_sequences=True, input_shape=(100, 1)),
-    Dropout(0.2),
-    LSTM(units=50, return_sequences=True),
-    Dropout(0.2),
-    LSTM(units=50),
-    Dense(units=1)
+    LSTM(50, return_sequences=True, input_shape=(100, 1)),  # Temporal pattern extraction
+    Dropout(0.2),  # 20% noise reduction
+    LSTM(50, return_sequences=True),  # Secondary feature learning
+    Dropout(0.2),  # Additional regularization
+    LSTM(50),  # Final sequence processing
+    Dense(1)  # Prediction output
 ])
 ```
+
 ## How I Use This
 
 Every Sunday evening—and a few weeknights when time allows—I kick off my market review by firing up the dashboard. My routine starts with a scan of my high-conviction stocks (DKNG, HIMS, PLTR), the Magnificent 7 mega-caps, and key indices like SPY, QQQ, and IWM to gauge broader market health. This ritual helps me reset for the week ahead, separating noise from actionable trends.
@@ -46,7 +51,7 @@ The dashboard's Keras price-forecasting model acts as a "second opinion" tool. W
 
 **Why This Works:** The dashboard's real value is in consolidation—it replaces a patchwork of spreadsheets, brokerage charts, and news scans with a single interface. What used to take hours now takes 15-30 minutes, letting me focus on execution rather than data wrangling. I've also learned to document my process (saving annotated charts and model predictions) to review my hits and misses. As any trader knows, the hardest part isn't finding opportunities—it's sticking to a system. This tool enforces that discipline.
 
-Future Improvements:
+## Future Improvements
 - Display the accuracy of the model against the given stock under the price predictions chart
 - Include more indicators such as volume, RSI, and more EMAs (to show EMA crossovers)
 - Add a way to compare 2 different stocks side by side
